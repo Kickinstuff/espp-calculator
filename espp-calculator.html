@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>ESPP Strategy Calculator</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-dim: #0ea5e9;
+      --green: #4ade80;
+      --red: #f87171;
+      --yellow: #fbbf24;
+      --input-bg: #0f172a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 16px;
+      padding-bottom: 40px;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .card-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    input[type="number"],
+    select {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 12px;
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="number"]:focus,
+    select:focus {
+      border-color: var(--accent);
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .row .field {
+      flex: 1;
+    }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .toggle-label {
+      font-size: 0.9rem;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .toggle {
+      position: relative;
+      width: 48px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #475569;
+      border-radius: 28px;
+      transition: 0.2s;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    input:checked + .slider {
+      background: var(--accent-dim);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .result-item {
+      background: var(--input-bg);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .result-item.full {
+      grid-column: 1 / -1;
+    }
+
+    .result-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 2px;
+    }
+
+    .result-value {
+      font-size: 1.15rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .result-value.green { color: var(--green); }
+    .result-value.red { color: var(--red); }
+    .result-value.yellow { color: var(--yellow); }
+    .result-value.accent { color: var(--accent); }
+
+    .highlight {
+      background: linear-gradient(135deg, #0c4a6e, #1e293b);
+      border: 1px solid #0369a1;
+    }
+
+    .note {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 8px;
+      line-height: 1.45;
+    }
+
+    .tax-note {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 8px;
+      padding: 10px;
+      background: rgba(251, 191, 36, 0.08);
+      border-radius: 8px;
+      border: 1px solid rgba(251, 191, 36, 0.2);
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 0.7rem;
+      color: #64748b;
+      margin-top: 20px;
+    }
+
+    .suggested {
+      font-size: 0.75rem;
+      color: var(--accent);
+      margin-top: 4px;
+    }
+
+    .calc-note {
+      font-size: 0.8rem;
+      color: var(--accent);
+      margin-top: 6px;
+      padding: 8px 10px;
+      background: rgba(56, 189, 248, 0.08);
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h1>ESPP Strategy Calculator</h1>
+  <p class="subtitle">Single-file • Runs fully offline • Shareable</p>
+
+  <!-- INPUTS -->
+  <div class="card">
+    <div class="card-title">Income & Location</div>
+
+    <div class="field">
+      <label for="yearlySalary">Yearly Salary ($)</label>
+      <input type="number" id="yearlySalary" value="50000" min="0" step="1000" />
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="periodMonths">Period (months)</label>
+        <input type="number" id="periodMonths" value="6" min="1" max="12" step="1" />
+      </div>
+      <div class="field">
+        <label for="state">State of Residence</label>
+        <select id="state">
+          <option value="TX" selected>Texas (0%)</option>
+          <option value="FL">Florida (0%)</option>
+          <option value="WA">Washington (0% wages)</option>
+          <option value="NV">Nevada (0%)</option>
+          <option value="TN">Tennessee (0%)</option>
+          <option value="WY">Wyoming (0%)</option>
+          <option value="AK">Alaska (0%)</option>
+          <option value="NH">New Hampshire (0%)</option>
+          <option value="SD">South Dakota (0%)</option>
+          <option value="CA">California (~9–13%)</option>
+          <option value="NY">New York (~6–11%)</option>
+          <option value="NJ">New Jersey (~6–11%)</option>
+          <option value="IL">Illinois (4.95%)</option>
+          <option value="PA">Pennsylvania (3.07%)</option>
+          <option value="OH">Ohio (~3–4%)</option>
+          <option value="GA">Georgia (~5%)</option>
+          <option value="NC">North Carolina (~4%)</option>
+          <option value="VA">Virginia (~5–6%)</option>
+          <option value="CO">Colorado (4.4%)</option>
+          <option value="AZ">Arizona (2.5%)</option>
+          <option value="OTHER">Other / Manual</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="contributionPct">Contribution %</label>
+        <input type="number" id="contributionPct" value="15" min="0" max="100" step="0.5" />
+      </div>
+      <div class="field">
+        <label for="keepPct">Keep %</label>
+        <input type="number" id="keepPct" value="2" min="0" max="100" step="0.5" />
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Share Prices & Discount</div>
+
+    <div class="field">
+      <label for="discountPct">ESPP Discount %</label>
+      <input type="number" id="discountPct" value="15" min="0" max="50" step="0.5" />
+    </div>
+
+    <div class="field">
+      <label for="marketPrice">Stock Price at Purchase (pre-discount) $</label>
+      <input type="number" id="marketPrice" value="100" min="0" step="0.01" />
+      <div class="calc-note" id="actualPriceNote">
+        You actually pay: $85.00 per share
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="sellPrice">Sell / Current Price ($)</label>
+      <input type="number" id="sellPrice" value="110" min="0" step="0.01" />
+    </div>
+
+    <div class="field" style="margin-top: 12px;">
+      <div class="toggle-row">
+        <div class="toggle-label">Value “Keep” shares at current price</div>
+        <label class="toggle">
+          <input type="checkbox" id="useCurrentForKeep" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <p class="note" style="margin-top: 6px;">
+        On = keep enough shares so their <em>current</em> value equals Keep % of income.<br>
+        Off = keep enough shares so their <em>purchase cost</em> equals Keep % of income.
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Tax Rates (auto-suggested, editable)</div>
+    <div class="row">
+      <div class="field">
+        <label for="federalRate">Federal ordinary rate %</label>
+        <input type="number" id="federalRate" value="12" min="0" max="50" step="1" />
+        <div class="suggested" id="fedSuggestion"></div>
+      </div>
+      <div class="field">
+        <label for="stateRate">State income tax %</label>
+        <input type="number" id="stateRate" value="0" min="0" max="15" step="0.1" />
+        <div class="suggested" id="stateSuggestion"></div>
+      </div>
+    </div>
+    <div class="field" style="margin-top: 10px;">
+      <label for="ltcgRate">Long-term capital gains rate %</label>
+      <input type="number" id="ltcgRate" value="15" min="0" max="30" step="1" />
+    </div>
+    <p class="note">Rates are suggested from salary + state. You can override any of them.</p>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="card highlight">
+    <div class="card-title" style="color: #7dd3fc;">Results</div>
+    <div class="result-grid" id="results"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Tax Estimate</div>
+    <div class="result-grid" id="taxResults"></div>
+    <div class="tax-note">
+      <strong>Assumptions (simplified):</strong><br>
+      • Discount portion taxed as ordinary income (federal + state).<br>
+      • Additional gain above the discounted purchase price treated as long-term capital gains.<br>
+      • Real outcome depends on qualifying vs disqualifying disposition and exact holding period.<br>
+      • This is an estimate only — not tax advice.
+    </div>
+  </div>
+
+  <p class="footer">Runs completely offline • Single HTML file • Share freely</p>
+
+  <script>
+    // Approximate 2026 state rates
+    const stateRates = {
+      TX: 0, FL: 0, WA: 0, NV: 0, TN: 0, WY: 0, AK: 0, NH: 0, SD: 0,
+      CA: 9.3, NY: 6.5, NJ: 6.37, IL: 4.95, PA: 3.07, OH: 3.5,
+      GA: 5.0, NC: 4.25, VA: 5.75, CO: 4.4, AZ: 2.5, OTHER: 0
+    };
+
+    // Rough federal marginal rate using 2026 MFJ brackets
+    function suggestFederalRate(salary) {
+      const approxTaxable = Math.max(0, salary - 32200);
+      if (approxTaxable <= 24800) return 10;
+      if (approxTaxable <= 100800) return 12;
+      if (approxTaxable <= 211400) return 22;
+      if (approxTaxable <= 403550) return 24;
+      if (approxTaxable <= 512450) return 32;
+      if (approxTaxable <= 768700) return 35;
+      return 37;
+    }
+
+    const $ = id => document.getElementById(id);
+    const fmt = n => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+    const fmt2 = n => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const pct = n => (n * 100).toFixed(1) + '%';
+
+    let lastSuggestedFed = null;
+    let lastSuggestedState = null;
+
+    function updateSuggestions() {
+      const salary = parseFloat($('yearlySalary').value) || 0;
+      const state = $('state').value;
+
+      const fedSug = suggestFederalRate(salary);
+      const stateSug = stateRates[state] ?? 0;
+
+      $('fedSuggestion').textContent = `Suggested from salary: ${fedSug}%`;
+      $('stateSuggestion').textContent = state === 'OTHER' ? 'Enter manually' : `Suggested: ${stateSug}%`;
+
+      if (lastSuggestedFed === null || parseFloat($('federalRate').value) === lastSuggestedFed) {
+        $('federalRate').value = fedSug;
+      }
+      if (lastSuggestedState === null || parseFloat($('stateRate').value) === lastSuggestedState) {
+        $('stateRate').value = stateSug;
+      }
+
+      lastSuggestedFed = fedSug;
+      lastSuggestedState = stateSug;
+    }
+
+    function calc() {
+      updateSuggestions();
+
+      const yearly = parseFloat($('yearlySalary').value) || 0;
+      const months = parseFloat($('periodMonths').value) || 6;
+      const contribPct = (parseFloat($('contributionPct').value) || 0) / 100;
+      const keepPct = (parseFloat($('keepPct').value) || 0) / 100;
+      const discountPct = (parseFloat($('discountPct').value) || 0) / 100;
+      const marketPrice = parseFloat($('marketPrice').value) || 0;   // pre-discount
+      const sellPrice = parseFloat($('sellPrice').value) || 0;
+      const useCurrent = $('useCurrentForKeep').checked;
+      const ordinaryRate = (parseFloat($('federalRate').value) || 0) / 100;
+      const stateRate = (parseFloat($('stateRate').value) || 0) / 100;
+      const ltcgRate = (parseFloat($('ltcgRate').value) || 0) / 100;
+
+      // Actual price the employee pays
+      const actualPurchasePrice = marketPrice * (1 - discountPct);
+
+      // Update the helper note
+      $('actualPriceNote').textContent = `You actually pay: ${fmt2(actualPurchasePrice)} per share`;
+
+      // Core numbers
+      const periodIncome = yearly * (months / 12);
+      const contributed = periodIncome * contribPct;
+      const topUpNeeded = periodIncome * Math.max(0, contribPct - keepPct);
+
+      const sharesBought = actualPurchasePrice > 0 ? contributed / actualPurchasePrice : 0;
+
+      const keepValueTarget = periodIncome * keepPct;
+      let sharesKept;
+      if (useCurrent) {
+        sharesKept = sellPrice > 0 ? keepValueTarget / sellPrice : 0;
+      } else {
+        sharesKept = actualPurchasePrice > 0 ? keepValueTarget / actualPurchasePrice : 0;
+      }
+      sharesKept = Math.min(sharesKept, sharesBought);
+
+      const sharesSold = Math.max(0, sharesBought - sharesKept);
+      const saleProceeds = sharesSold * sellPrice;
+
+      const profit = saleProceeds - topUpNeeded;
+      const profitPctOfContrib = contributed > 0 ? profit / contributed : 0;
+
+      // Tax pieces
+      // Ordinary income = the discount amount on the sold shares
+      const discountPerShare = marketPrice - actualPurchasePrice;
+      const ordinaryIncomeFromDiscount = sharesSold * discountPerShare;
+      const additionalGain = Math.max(0, (sellPrice - actualPurchasePrice) * sharesSold);
+
+      const federalOrdinaryTax = ordinaryIncomeFromDiscount * ordinaryRate;
+      const stateTax = ordinaryIncomeFromDiscount * stateRate;
+      const cgTax = additionalGain * ltcgRate;
+      const totalEstTax = federalOrdinaryTax + stateTax + cgTax;
+      const afterTaxProfit = profit - totalEstTax;
+
+      // Render Results
+      $('results').innerHTML = `
+        <div class="result-item">
+          <div class="result-label">Period Income</div>
+          <div class="result-value">${fmt(periodIncome)}</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Contributed (${(contribPct*100).toFixed(1)}%)</div>
+          <div class="result-value">${fmt(contributed)}</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Actual Purchase Price</div>
+          <div class="result-value">${fmt2(actualPurchasePrice)}</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Shares Bought</div>
+          <div class="result-value">${sharesBought.toFixed(2)}</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Shares Kept</div>
+          <div class="result-value">${sharesKept.toFixed(2)}</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Shares Sold</div>
+          <div class="result-value">${sharesSold.toFixed(2)}</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Sale Proceeds</div>
+          <div class="result-value">${fmt2(saleProceeds)}</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Top-up Needed</div>
+          <div class="result-value accent">${fmt(topUpNeeded)}</div>
+        </div>
+        <div class="result-item full">
+          <div class="result-label">Profit (after top-up)</div>
+          <div class="result-value ${profit >= 0 ? 'green' : 'red'}">${fmt2(profit)}</div>
+        </div>
+        <div class="result-item full">
+          <div class="result-label">Profit % of Contribution</div>
+          <div class="result-value ${profit >= 0 ? 'green' : 'red'}">${pct(profitPctOfContrib)}</div>
+        </div>
+      `;
+
+      $('taxResults').innerHTML = `
+        <div class="result-item">
+          <div class="result-label">Ordinary Income (discount)</div>
+          <div class="result-value yellow">${fmt2(ordinaryIncomeFromDiscount)}</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Capital Gain</div>
+          <div class="result-value yellow">${fmt2(additionalGain)}</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Federal Tax on Discount</div>
+          <div class="result-value">${fmt2(federalOrdinaryTax)}</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">State Tax on Discount</div>
+          <div class="result-value">${fmt2(stateTax)}</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Tax on Capital Gain</div>
+          <div class="result-value">${fmt2(cgTax)}</div>
+        </div>
+        <div class="result-item full">
+          <div class="result-label">Total Estimated Tax</div>
+          <div class="result-value red">${fmt2(totalEstTax)}</div>
+        </div>
+        <div class="result-item full">
+          <div class="result-label">After-Tax Profit (rough)</div>
+          <div class="result-value ${afterTaxProfit >= 0 ? 'green' : 'red'}">${fmt2(afterTaxProfit)}</div>
+        </div>
+      `;
+    }
+
+    // Listeners
+    ['yearlySalary','periodMonths','contributionPct','keepPct','discountPct',
+     'marketPrice','sellPrice','federalRate','stateRate','ltcgRate',
+     'useCurrentForKeep','state']
+      .forEach(id => {
+        const el = $(id);
+        el.addEventListener('input', calc);
+        el.addEventListener('change', calc);
+      });
+
+    // Initial
+    calc();
+  </script>
+</body>
+</html>
