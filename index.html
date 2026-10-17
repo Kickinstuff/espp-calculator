@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -107,6 +105,7 @@
       border-radius: 8px;
       padding: 8px 10px;
       margin-top: 6px;
+      margin-bottom: 4px;
       line-height: 1.45;
     }
     .info-text.open { display: block; }
@@ -124,8 +123,7 @@
       transition: border-color 0.15s;
     }
 
-    input[type="number"]:focus,
-    select:focus {
+    input:focus, select:focus {
       border-color: var(--accent);
     }
 
@@ -282,26 +280,42 @@
       border-radius: 8px;
     }
 
-    details {
+    /* Expandable explainer */
+    details.explainer {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 12px 16px;
-      margin-bottom: 14px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
     }
-    details summary {
-      font-size: 0.9rem;
-      color: var(--accent);
+    details.explainer summary {
       cursor: pointer;
+      font-weight: 600;
+      color: var(--accent);
       list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    details summary::-webkit-details-marker { display: none; }
-    details[open] summary { margin-bottom: 10px; }
-    details p {
-      font-size: 0.82rem;
+    details.explainer summary::-webkit-details-marker { display: none; }
+    details.explainer summary::before {
+      content: "▶";
+      font-size: 0.7rem;
+      transition: transform 0.2s;
+    }
+    details.explainer[open] summary::before {
+      transform: rotate(90deg);
+    }
+    details.explainer .explainer-body {
+      margin-top: 12px;
+      font-size: 0.85rem;
       color: var(--muted);
+      line-height: 1.55;
+    }
+    details.explainer .explainer-body p { margin-bottom: 8px; }
+    details.explainer .explainer-body ul {
+      padding-left: 18px;
       margin-bottom: 8px;
-      line-height: 1.45;
     }
   </style>
 </head>
@@ -309,24 +323,33 @@
   <h1>ESPP Strategy Calculator</h1>
   <p class="subtitle">Single-file • Runs fully offline • Shareable</p>
 
-  <details>
+  <!-- HIGH-LEVEL EXPLAINER -->
+  <details class="explainer">
     <summary>What does this calculator do?</summary>
-    <p>You contribute a percentage of income to an ESPP, buy shares at a discount, then at the end of the period keep a smaller percentage as a long-term holding and sell the rest.</p>
-    <p>The sale proceeds are used to fund the next period’s contribution (the “top-up”). Anything left after setting aside the top-up is profit.</p>
-    <p><strong>Profit (after top-up)</strong> is the cash result after funding the contribution with sale proceeds.</p>
+    <div class="explainer-body">
+      <p>This tool models a common ESPP strategy:</p>
+      <ul>
+        <li>You contribute a percentage of your pay during an offering period.</li>
+        <li>At the end of the period you buy shares at a discount (often with a lookback).</li>
+        <li>You keep a smaller percentage of the shares (as a long-term holding) and sell the rest.</li>
+        <li>The cash from the sale is used to “top up” so your net out-of-pocket is only the Keep % of income.</li>
+      </ul>
+      <p><strong>Profit (after top-up)</strong> is the cash result after funding the contribution with sale proceeds.</p>
+      <p>All tax numbers are simplified estimates only — not tax advice.</p>
+    </div>
   </details>
 
   <!-- INPUTS -->
   <div class="card">
-    <div class="card-title">Income & Location</div>
+    <div class="card-title">Income &amp; Location</div>
 
     <div class="field">
       <label for="yearlySalary">
         Yearly Salary ($)
         <button type="button" class="info-btn" data-info="salaryInfo">ⓘ</button>
       </label>
+      <div class="info-text" id="salaryInfo">Your annual gross salary. Used to calculate period income and to suggest federal tax brackets.</div>
       <input type="number" id="yearlySalary" value="50000" min="0" step="1000">
-      <div class="info-text" id="salaryInfo">Your gross annual salary. Period income is calculated from this.</div>
     </div>
 
     <div class="row">
@@ -335,34 +358,68 @@
           Period (months)
           <button type="button" class="info-btn" data-info="periodInfo">ⓘ</button>
         </label>
+        <div class="info-text" id="periodInfo">Length of the ESPP offering / purchase period (commonly 6 months).</div>
         <input type="number" id="periodMonths" value="6" min="1" max="12" step="1">
-        <div class="info-text" id="periodInfo">Length of the ESPP offering period (commonly 6 months).</div>
       </div>
       <div class="field">
         <label for="state">State of Residence</label>
-        <select id="state">
-          <option value="TX" selected>Texas (0%)</option>
-          <option value="FL">Florida (0%)</option>
-          <option value="WA">Washington (0% wages)</option>
-          <option value="NV">Nevada (0%)</option>
-          <option value="TN">Tennessee (0%)</option>
-          <option value="WY">Wyoming (0%)</option>
+                <select id="state">
+          <option value="AL">Alabama (~5%)</option>
           <option value="AK">Alaska (0%)</option>
-          <option value="NH">New Hampshire (0%)</option>
-          <option value="SD">South Dakota (0%)</option>
-          <option value="CA">California (~9–13%)</option>
-          <option value="NY">New York (~6–11%)</option>
-          <option value="NJ">New Jersey (~6–11%)</option>
-          <option value="IL">Illinois (4.95%)</option>
-          <option value="PA">Pennsylvania (3.07%)</option>
-          <option value="OH">Ohio (~3–4%)</option>
-          <option value="GA">Georgia (~5%)</option>
-          <option value="NC">North Carolina (~4%)</option>
-          <option value="VA">Virginia (~5–6%)</option>
-          <option value="CO">Colorado (4.4%)</option>
           <option value="AZ">Arizona (2.5%)</option>
+          <option value="AR">Arkansas (~3.9%)</option>
+          <option value="CA">California (~9.3%)</option>
+          <option value="CO">Colorado (4.4%)</option>
+          <option value="CT">Connecticut (~6.99%)</option>
+          <option value="DE">Delaware (~6.6%)</option>
+          <option value="DC">District of Columbia (~10.75%)</option>
+          <option value="FL">Florida (0%)</option>
+          <option value="GA">Georgia (~5%)</option>
+          <option value="HI">Hawaii (~11%)</option>
+          <option value="ID">Idaho (5.3%)</option>
+          <option value="IL">Illinois (4.95%)</option>
+          <option value="IN">Indiana (2.95%)</option>
+          <option value="IA">Iowa (3.8%)</option>
+          <option value="KS">Kansas (~5.58%)</option>
+          <option value="KY">Kentucky (3.5%)</option>
+          <option value="LA">Louisiana (3%)</option>
+          <option value="ME">Maine (~7.15%)</option>
+          <option value="MD">Maryland (~5.75%)</option>
+          <option value="MA">Massachusetts (5% + surtax)</option>
+          <option value="MI">Michigan (4.25%)</option>
+          <option value="MN">Minnesota (~9.85%)</option>
+          <option value="MS">Mississippi (4%)</option>
+          <option value="MO">Missouri (~4.7%)</option>
+          <option value="MT">Montana (~5.65%)</option>
+          <option value="NE">Nebraska (~4.55%)</option>
+          <option value="NV">Nevada (0%)</option>
+          <option value="NH">New Hampshire (0%)</option>
+          <option value="NJ">New Jersey (~10.75%)</option>
+          <option value="NM">New Mexico (~5.9%)</option>
+          <option value="NY">New York (~6.5%)</option>
+          <option value="NC">North Carolina (3.99%)</option>
+          <option value="ND">North Dakota (~2.5%)</option>
+          <option value="OH">Ohio (~2.75%)</option>
+          <option value="OK">Oklahoma (~4.5%)</option>
+          <option value="OR">Oregon (~9.9%)</option>
+          <option value="PA">Pennsylvania (3.07%)</option>
+          <option value="RI">Rhode Island (~5.99%)</option>
+          <option value="SC">South Carolina (~6%)</option>
+          <option value="SD">South Dakota (0%)</option>
+          <option value="TN">Tennessee (0%)</option>
+          <option value="TX" selected>Texas (0%)</option>
+          <option value="UT">Utah (4.5%)</option>
+          <option value="VT">Vermont (~8.75%)</option>
+          <option value="VA">Virginia (5.75%)</option>
+          <option value="WA">Washington (0% wages)</option>
+          <option value="WV">West Virginia (~4.82%)</option>
+          <option value="WI">Wisconsin (~7.65%)</option>
+          <option value="WY">Wyoming (0%)</option>
           <option value="OTHER">Other / Manual</option>
         </select>
+      <p class="note" style="margin-top: 8px;">
+        State rates are approximate 2026 figures for estimation only. Progressive states show a representative rate. Always verify with current state rules. Use “Other / Manual” to enter your own rate.
+      </p>
       </div>
     </div>
 
@@ -372,30 +429,30 @@
           Contribution %
           <button type="button" class="info-btn" data-info="contribInfo">ⓘ</button>
         </label>
+        <div class="info-text" id="contribInfo">Percentage of your pay that is deducted for the ESPP during the period (typical max is 15%).</div>
         <input type="number" id="contributionPct" value="15" min="0" max="100" step="0.5">
-        <div class="info-text" id="contribInfo">Percentage of period income you contribute to the ESPP.</div>
       </div>
       <div class="field">
         <label for="keepPct">
           Keep %
           <button type="button" class="info-btn" data-info="keepInfo">ⓘ</button>
         </label>
+        <div class="info-text" id="keepInfo">The portion of period income you want to keep invested in the stock long-term. The rest is sold to recover cash.</div>
         <input type="number" id="keepPct" value="2" min="0" max="100" step="0.5">
-        <div class="info-text" id="keepInfo">Percentage of period income you want to retain as shares (long-term holding).</div>
       </div>
     </div>
   </div>
 
   <div class="card">
-    <div class="card-title">Share Prices & Discount</div>
+    <div class="card-title">Share Prices &amp; Discount</div>
 
     <div class="field">
       <label for="discountPct">
         ESPP Discount %
         <button type="button" class="info-btn" data-info="discountInfo">ⓘ</button>
       </label>
+      <div class="info-text" id="discountInfo">The percentage discount your plan offers (commonly 15%). Purchase price = reference price × (1 − discount).</div>
       <input type="number" id="discountPct" value="15" min="0" max="50" step="0.5">
-      <div class="info-text" id="discountInfo">Typical ESPP discount is 15%. The calculator uses this to determine the actual price you pay.</div>
     </div>
 
     <div class="field">
@@ -403,9 +460,11 @@
         Stock Price at Purchase (pre-discount) $
         <button type="button" class="info-btn" data-info="marketInfo">ⓘ</button>
       </label>
+      <div class="info-text" id="marketInfo">
+        The reference market price used before applying the discount. With a lookback this is usually the lower of the offering-start price and the purchase-date price.
+      </div>
       <input type="number" id="marketPrice" value="100" min="0" step="0.01">
       <div class="calc-note" id="actualPriceNote">You actually pay: $85.00 per share</div>
-      <div class="info-text" id="marketInfo">Enter the regular market price of the stock at purchase time. The calculator applies the discount automatically.</div>
     </div>
 
     <div class="field">
@@ -413,12 +472,12 @@
         Sell / Current Price ($)
         <button type="button" class="info-btn" data-info="sellInfo">ⓘ</button>
       </label>
+      <div class="info-text" id="sellInfo">The price at which you plan to sell the shares you don’t keep, or the current market price used to value kept shares.</div>
       <input type="number" id="sellPrice" value="110" min="0" step="0.01">
-      <div class="info-text" id="sellInfo">The price at which you sell the shares (or the current market price).</div>
     </div>
 
     <div class="field" style="margin-top: 12px;">
-      <div class="toggle-row">
+            <div class="toggle-row">
         <div class="toggle-label">Value “Keep” shares at current price</div>
         <label class="toggle">
           <input type="checkbox" id="useCurrentForKeep" checked>
@@ -450,12 +509,12 @@
       <div class="field">
         <label for="federalRate">Federal ordinary rate %</label>
         <input type="number" id="federalRate" value="12" min="0" max="50" step="1">
-        <div class="suggested" id="fedSuggestion"></div>
+        <div class="suggested" id="fedSuggestion">Suggested from salary: 10%</div>
       </div>
       <div class="field">
         <label for="stateRate">State income tax %</label>
         <input type="number" id="stateRate" value="0" min="0" max="15" step="0.1">
-        <div class="suggested" id="stateSuggestion"></div>
+        <div class="suggested" id="stateSuggestion">Suggested: 0%</div>
       </div>
     </div>
     <div class="field" style="margin-top: 10px;">
@@ -468,12 +527,82 @@
   <!-- RESULTS -->
   <div class="card highlight">
     <div class="card-title" style="color: #7dd3fc;">Results</div>
-    <div class="result-grid" id="results"></div>
+    <div class="result-grid" id="results">
+        <div class="result-item">
+          <div class="result-label">Period Income</div>
+          <div class="result-value">$25,000</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Contributed (15.0%)</div>
+          <div class="result-value">$3,750</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Actual Purchase Price</div>
+          <div class="result-value">$85.00</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Shares Bought</div>
+          <div class="result-value">44.12</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Shares Kept</div>
+          <div class="result-value">4.55</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Shares Sold</div>
+          <div class="result-value">39.57</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Sale Proceeds</div>
+          <div class="result-value">$4,352.94</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Top-up Needed</div>
+          <div class="result-value accent">$3,250</div>
+        </div>
+        <div class="result-item full">
+          <div class="result-label">Profit (after top-up)</div>
+          <div class="result-value green">$1,102.94</div>
+        </div>
+        <div class="result-item full">
+          <div class="result-label">Profit % of Contribution</div>
+          <div class="result-value green">29.4%</div>
+        </div>
+      </div>
   </div>
 
   <div class="card">
     <div class="card-title">Tax Estimate</div>
-    <div class="result-grid" id="taxResults"></div>
+    <div class="result-grid" id="taxResults">
+        <div class="result-item">
+          <div class="result-label">Ordinary Income (discount)</div>
+          <div class="result-value yellow">$593.58</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Capital Gain</div>
+          <div class="result-value yellow">$989.30</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Federal Tax on Discount</div>
+          <div class="result-value">$59.36</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">State Tax on Discount</div>
+          <div class="result-value">$0.00</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Tax on Capital Gain</div>
+          <div class="result-value">$148.40</div>
+        </div>
+        <div class="result-item full">
+          <div class="result-label">Total Estimated Tax</div>
+          <div class="result-value red">$207.75</div>
+        </div>
+        <div class="result-item full">
+          <div class="result-label">After-Tax Profit (rough)</div>
+          <div class="result-value green">$895.19</div>
+        </div>
+      </div>
     <div class="tax-note">
       <strong>Assumptions (simplified):</strong><br>
       • Discount portion taxed as ordinary income (federal + state).<br>
@@ -486,12 +615,84 @@
   <p class="footer">Runs completely offline • Single HTML file • Share freely</p>
 
   <script>
-    const stateRates = {
-      TX: 0, FL: 0, WA: 0, NV: 0, TN: 0, WY: 0, AK: 0, NH: 0, SD: 0,
-      CA: 9.3, NY: 6.5, NJ: 6.37, IL: 4.95, PA: 3.07, OH: 3.5,
-      GA: 5.0, NC: 4.25, VA: 5.75, CO: 4.4, AZ: 2.5, OTHER: 0
+    // Approximate 2026 state rates
+        
+    // State tax data (2026 approximate)
+    // type: 'none' | 'flat' | 'progressive'
+    // For progressive: lowRate applies at lower incomes, highRate at higher incomes
+    const stateTaxData = {
+      AL: { type: 'progressive', low: 2.0, high: 5.0 },
+      AK: { type: 'none', rate: 0 },
+      AZ: { type: 'flat', rate: 2.5 },
+      AR: { type: 'progressive', low: 2.0, high: 3.9 },
+      CA: { type: 'progressive', low: 2.0, high: 9.3 },   // representative; true top is 13.3% at very high income
+      CO: { type: 'flat', rate: 4.4 },
+      CT: { type: 'progressive', low: 3.0, high: 6.99 },
+      DE: { type: 'progressive', low: 2.2, high: 6.6 },
+      DC: { type: 'progressive', low: 4.0, high: 10.75 },
+      FL: { type: 'none', rate: 0 },
+      GA: { type: 'flat', rate: 5.0 },
+      HI: { type: 'progressive', low: 1.4, high: 11.0 },
+      ID: { type: 'flat', rate: 5.3 },
+      IL: { type: 'flat', rate: 4.95 },
+      IN: { type: 'flat', rate: 2.95 },
+      IA: { type: 'flat', rate: 3.8 },
+      KS: { type: 'progressive', low: 3.1, high: 5.58 },
+      KY: { type: 'flat', rate: 3.5 },
+      LA: { type: 'flat', rate: 3.0 },
+      ME: { type: 'progressive', low: 5.8, high: 7.15 },
+      MD: { type: 'progressive', low: 2.0, high: 5.75 },
+      MA: { type: 'flat', rate: 5.0 },          // base rate; 4% surtax on $1M+ not modeled
+      MI: { type: 'flat', rate: 4.25 },
+      MN: { type: 'progressive', low: 5.35, high: 9.85 },
+      MS: { type: 'flat', rate: 4.0 },
+      MO: { type: 'progressive', low: 2.0, high: 4.7 },
+      MT: { type: 'progressive', low: 4.7, high: 5.65 },
+      NE: { type: 'progressive', low: 2.46, high: 4.55 },
+      NV: { type: 'none', rate: 0 },
+      NH: { type: 'none', rate: 0 },
+      NJ: { type: 'progressive', low: 1.4, high: 10.75 },
+      NM: { type: 'progressive', low: 1.7, high: 5.9 },
+      NY: { type: 'progressive', low: 4.0, high: 6.85 },  // representative; true top much higher
+      NC: { type: 'flat', rate: 3.99 },
+      ND: { type: 'progressive', low: 1.1, high: 2.5 },
+      OH: { type: 'progressive', low: 2.75, high: 3.5 },
+      OK: { type: 'progressive', low: 0.25, high: 4.75 },
+      OR: { type: 'progressive', low: 4.75, high: 9.9 },
+      PA: { type: 'flat', rate: 3.07 },
+      RI: { type: 'progressive', low: 3.75, high: 5.99 },
+      SC: { type: 'progressive', low: 0.0, high: 6.2 },
+      SD: { type: 'none', rate: 0 },
+      TN: { type: 'none', rate: 0 },
+      TX: { type: 'none', rate: 0 },
+      UT: { type: 'flat', rate: 4.5 },
+      VT: { type: 'progressive', low: 3.35, high: 8.75 },
+      VA: { type: 'progressive', low: 2.0, high: 5.75 },
+      WA: { type: 'none', rate: 0 },
+      WV: { type: 'progressive', low: 2.36, high: 4.82 },
+      WI: { type: 'progressive', low: 3.5, high: 7.65 },
+      WY: { type: 'none', rate: 0 },
+      OTHER: { type: 'none', rate: 0 }
     };
 
+    // Suggest a state rate based on salary for progressive states
+    function suggestStateRate(stateCode, salary) {
+      const data = stateTaxData[stateCode] || stateTaxData.OTHER;
+      if (data.type === 'none' || data.type === 'flat') {
+        return data.rate;
+      }
+      // Progressive: simple linear interpolation between low and high
+      // Anchors: ~$40k → closer to low, ~$200k+ → closer to high
+      const lowIncome = 40000;
+      const highIncome = 200000;
+      let t = (salary - lowIncome) / (highIncome - lowIncome);
+      t = Math.max(0, Math.min(1, t)); // clamp 0–1
+      const rate = data.low + t * (data.high - data.low);
+      return Math.round(rate * 100) / 100; // 2 decimal places
+    }
+
+
+    // Rough federal marginal rate using 2026 MFJ brackets
     function suggestFederalRate(salary) {
       const approxTaxable = Math.max(0, salary - 32200);
       if (approxTaxable <= 24800) return 10;
@@ -524,10 +725,17 @@
       const state = $('state').value;
 
       const fedSug = suggestFederalRate(salary);
-      const stateSug = stateRates[state] ?? 0;
+      const stateSug = suggestStateRate(state, salary);
 
       $('fedSuggestion').textContent = `Suggested from salary: ${fedSug}%`;
-      $('stateSuggestion').textContent = state === 'OTHER' ? 'Enter manually' : `Suggested: ${stateSug}%`;
+      const data = stateTaxData[state] || stateTaxData.OTHER;
+      if (state === 'OTHER') {
+        $('stateSuggestion').textContent = 'Enter manually';
+      } else if (data.type === 'progressive') {
+        $('stateSuggestion').textContent = `Suggested (scales with salary): ${stateSug}%`;
+      } else {
+        $('stateSuggestion').textContent = `Suggested: ${stateSug}%`;
+      }
 
       if (lastSuggestedFed === null || parseFloat($('federalRate').value) === lastSuggestedFed) {
         $('federalRate').value = fedSug;
@@ -582,7 +790,7 @@
       const profit = saleProceeds - topUpNeeded;
       const profitPctOfContrib = contributed > 0 ? profit / contributed : 0;
 
-      // Tax pieces
+      // Tax pieces (simplified – only on sold shares)
       const discountPerShare = marketPrice - actualPurchasePrice;
       const ordinaryIncomeFromDiscount = sharesSold * discountPerShare;
       const additionalGain = Math.max(0, (sellPrice - actualPurchasePrice) * sharesSold);
@@ -681,5 +889,6 @@
     // Initial
     calc();
   </script>
-</body>
-</html>
+
+
+</body></html>
