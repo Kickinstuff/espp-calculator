@@ -38,6 +38,28 @@
       margin: 0 auto;
     }
 
+    /* Two-column layout on larger screens */
+    @media (min-width: 900px) {
+      body {
+        max-width: 1100px;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        align-items: start;
+      }
+      .layout-left, .layout-right {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .layout-right {
+        position: sticky;
+        top: 16px;
+      }
+    }
+
     h1 {
       font-size: 1.4rem;
       font-weight: 700;
@@ -312,7 +334,42 @@
       color: var(--muted);
       line-height: 1.55;
     }
+
     details.explainer .explainer-body p { margin-bottom: 8px; }
+    .tax-details {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 0;
+    }
+    .tax-details summary {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--accent);
+      cursor: pointer;
+      list-style: none;
+    }
+    .tax-details summary::-webkit-details-marker { display: none; }
+    #taxResults {
+      display: block;
+    }
+    .tax-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .tax-stack .result-item {
+      background: var(--input-bg);
+      border-radius: 10px;
+      padding: 12px;
+    }
+    .result-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
     details.explainer .explainer-body ul {
       padding-left: 18px;
       margin-bottom: 8px;
@@ -339,6 +396,8 @@
     </div>
   </details>
 
+  <div class="layout">
+    <div class="layout-left">
   <!-- INPUTS -->
   <div class="card">
     <div class="card-title">Income &amp; Location</div>
@@ -417,7 +476,7 @@
           <option value="WY">Wyoming (0%)</option>
           <option value="OTHER">Other / Manual</option>
         </select>
-      <p class="note" style="margin-top: 8px;">
+      <p class="note" style="margin-top: 8px; margin-bottom: 16px;">
         State rates are approximate 2026 figures for estimation only. Progressive states show a representative rate. Always verify with current state rules. Use “Other / Manual” to enter your own rate.
       </p>
       </div>
@@ -518,12 +577,15 @@
       </div>
     </div>
     <div class="field" style="margin-top: 10px;">
-      <label for="ltcgRate">Long-term capital gains rate %</label>
-      <input type="number" id="ltcgRate" value="15" min="0" max="30" step="1">
+      <label for="ltcgRate">Long-term capital gains rate % <span style="opacity:0.6">(unused in this model)</span></label>
+      <input type="number" id="ltcgRate" value="15" min="0" max="30" step="1" disabled style="opacity:0.5;">
+      <p class="note" style="margin-top:6px;">Not used — immediate sale is taxed entirely at ordinary rates.</p>
     </div>
     <p class="note">Rates are suggested from salary + state. You can override any of them.</p>
   </div>
 
+    </div><!-- end layout-left -->
+    <div class="layout-right">
   <!-- RESULTS -->
   <div class="card highlight">
     <div class="card-title" style="color: #7dd3fc;">Results</div>
@@ -604,13 +666,18 @@
         </div>
       </div>
     <div class="tax-note">
-      <strong>Assumptions (simplified):</strong><br>
-      • Discount portion taxed as ordinary income (federal + state).<br>
-      • Additional gain above the discounted purchase price treated as long-term capital gains.<br>
-      • Real outcome depends on qualifying vs disqualifying disposition and exact holding period.<br>
+      <strong>Assumptions (immediate sale / disqualifying disposition):</strong><br>
+      • Model assumes you sell right after purchase (6-month period + immediate sale).<br>
+      • This fails the holding-period tests for a qualifying disposition.<br>
+      • The ESPP discount is ordinary (compensation) income.<br>
+      • Any extra gain above the purchase price is short-term capital gain, taxed at ordinary rates.<br>
+      • No long-term capital gains rate applies under this strategy.<br>
       • This is an estimate only — not tax advice.
     </div>
   </div>
+
+    </div><!-- end layout-right -->
+  </div><!-- end layout -->
 
   <p class="footer">Runs completely offline • Single HTML file • Share freely</p>
 
@@ -712,12 +779,12 @@
     let lastSuggestedFed = null;
     let lastSuggestedState = null;
 
-    // Info toggles
-    document.querySelectorAll('.info-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const el = $(btn.dataset.info);
-        if (el) el.classList.toggle('open');
-      });
+    // Info toggles (works for both static and dynamically generated buttons)
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.info-btn');
+      if (!btn) return;
+      const el = $(btn.dataset.info);
+      if (el) el.classList.toggle('open');
     });
 
     function updateSuggestions() {
@@ -790,88 +857,116 @@
       const profit = saleProceeds - topUpNeeded;
       const profitPctOfContrib = contributed > 0 ? profit / contributed : 0;
 
-      // Tax pieces (simplified – only on sold shares)
+      // Tax pieces — modeled for immediate sale / disqualifying disposition
+      // Discount = ordinary income; additional gain = short-term capital gain
+      // (taxed at ordinary rates because holding period is only days/weeks)
       const discountPerShare = marketPrice - actualPurchasePrice;
       const ordinaryIncomeFromDiscount = sharesSold * discountPerShare;
       const additionalGain = Math.max(0, (sellPrice - actualPurchasePrice) * sharesSold);
+      // Entire economic benefit taxed at ordinary rates in this strategy
+      const totalOrdinaryIncome = ordinaryIncomeFromDiscount + additionalGain;
 
-      const federalOrdinaryTax = ordinaryIncomeFromDiscount * ordinaryRate;
-      const stateTax = ordinaryIncomeFromDiscount * stateRate;
-      const cgTax = additionalGain * ltcgRate;
-      const totalEstTax = federalOrdinaryTax + stateTax + cgTax;
+      const federalOrdinaryTax = totalOrdinaryIncome * ordinaryRate;
+      const stateTax = totalOrdinaryIncome * stateRate;
+      const cgTax = 0; // no long-term CG available on immediate sale
+      const totalEstTax = federalOrdinaryTax + stateTax;
       const afterTaxProfit = profit - totalEstTax;
 
       $('results').innerHTML = `
         <div class="result-item">
-          <div class="result-label">Period Income</div>
+          <div class="result-label">Period Income <button type="button" class="info-btn" data-info="rPeriodInfo">ⓘ</button></div>
+          <div class="info-text" id="rPeriodInfo">Your yearly salary prorated to the length of the ESPP period.</div>
           <div class="result-value">${fmt(periodIncome)}</div>
         </div>
         <div class="result-item">
-          <div class="result-label">Contributed (${(contribPct*100).toFixed(1)}%)</div>
+          <div class="result-label">Contributed (${(contribPct*100).toFixed(1)}%) <button type="button" class="info-btn" data-info="rContribInfo">ⓘ</button></div>
+          <div class="info-text" id="rContribInfo">Total dollars withheld and used to buy shares this period.</div>
           <div class="result-value">${fmt(contributed)}</div>
         </div>
         <div class="result-item">
-          <div class="result-label">Actual Purchase Price</div>
+          <div class="result-label">Actual Purchase Price <button type="button" class="info-btn" data-info="rPriceInfo">ⓘ</button></div>
+          <div class="info-text" id="rPriceInfo">Market price reduced by the ESPP discount — what you actually paid per share.</div>
           <div class="result-value">${fmt2(actualPurchasePrice)}</div>
         </div>
         <div class="result-item">
-          <div class="result-label">Shares Bought</div>
+          <div class="result-label">Shares Bought <button type="button" class="info-btn" data-info="rBoughtInfo">ⓘ</button></div>
+          <div class="info-text" id="rBoughtInfo">Number of shares purchased with your contribution.</div>
           <div class="result-value">${sharesBought.toFixed(2)}</div>
         </div>
         <div class="result-item">
-          <div class="result-label">Shares Kept</div>
+          <div class="result-label">Shares Kept <button type="button" class="info-btn" data-info="rKeptInfo">ⓘ</button></div>
+          <div class="info-text" id="rKeptInfo">Shares retained so their value (or cost) equals your Keep % of period income.</div>
           <div class="result-value">${sharesKept.toFixed(2)}</div>
         </div>
         <div class="result-item">
-          <div class="result-label">Shares Sold</div>
+          <div class="result-label">Shares Sold <button type="button" class="info-btn" data-info="rSoldInfo">ⓘ</button></div>
+          <div class="info-text" id="rSoldInfo">Shares sold to generate cash for the next period’s top-up and any profit.</div>
           <div class="result-value">${sharesSold.toFixed(2)}</div>
         </div>
         <div class="result-item">
-          <div class="result-label">Sale Proceeds</div>
+          <div class="result-label">Sale Proceeds <button type="button" class="info-btn" data-info="rProceedsInfo">ⓘ</button></div>
+          <div class="info-text" id="rProceedsInfo">Cash received from selling the shares that were not kept.</div>
           <div class="result-value">${fmt2(saleProceeds)}</div>
         </div>
         <div class="result-item">
-          <div class="result-label">${fullTopUp ? 'Top-up (full contribution)' : 'Top-up (contrib − keep)'}</div>
+          <div class="result-label">${fullTopUp ? 'Top-up (full contribution)' : 'Top-up (contrib − keep)'} <button type="button" class="info-btn" data-info="rTopupInfo">ⓘ</button></div>
+          <div class="info-text" id="rTopupInfo">Cash set aside to fund the next period’s contribution. Toggle above controls whether Keep % is subtracted.</div>
           <div class="result-value accent">${fmt(topUpNeeded)}</div>
         </div>
         <div class="result-item full">
-          <div class="result-label">Profit (after top-up)</div>
+          <div class="result-label">Profit (after top-up) <button type="button" class="info-btn" data-info="rProfitInfo">ⓘ</button></div>
+          <div class="info-text" id="rProfitInfo">Sale proceeds remaining after setting aside the top-up amount for the next period.</div>
           <div class="result-value ${profit >= 0 ? 'green' : 'red'}">${fmt2(profit)}</div>
         </div>
         <div class="result-item full">
-          <div class="result-label">Profit % of Contribution</div>
+          <div class="result-label">Profit % of Contribution <button type="button" class="info-btn" data-info="rProfitPctInfo">ⓘ</button></div>
+          <div class="info-text" id="rProfitPctInfo">Profit divided by the amount you contributed this period.</div>
           <div class="result-value ${profit >= 0 ? 'green' : 'red'}">${pct(profitPctOfContrib)}</div>
         </div>
       `;
 
       $('taxResults').innerHTML = `
-        <div class="result-item">
-          <div class="result-label">Ordinary Income (discount)</div>
-          <div class="result-value yellow">${fmt2(ordinaryIncomeFromDiscount)}</div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">Capital Gain</div>
-          <div class="result-value yellow">${fmt2(additionalGain)}</div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">Federal Tax on Discount</div>
-          <div class="result-value">${fmt2(federalOrdinaryTax)}</div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">State Tax on Discount</div>
-          <div class="result-value">${fmt2(stateTax)}</div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">Tax on Capital Gain</div>
-          <div class="result-value">${fmt2(cgTax)}</div>
-        </div>
-        <div class="result-item full">
-          <div class="result-label">Total Estimated Tax</div>
-          <div class="result-value red">${fmt2(totalEstTax)}</div>
-        </div>
-        <div class="result-item full">
-          <div class="result-label">After-Tax Profit (rough)</div>
-          <div class="result-value ${afterTaxProfit >= 0 ? 'green' : 'red'}">${fmt2(afterTaxProfit)}</div>
+        <div class="tax-stack">
+          <details class="tax-details">
+            <summary>Show tax breakdown</summary>
+            <div class="result-grid" style="margin-top: 10px;">
+              <div class="result-item">
+                <div class="result-label">Ordinary Income (discount) <button type="button" class="info-btn" data-info="tOrdInfo">ⓘ</button></div>
+                <div class="info-text" id="tOrdInfo">The ESPP discount on shares sold. Taxed as ordinary (compensation) income.</div>
+                <div class="result-value yellow">${fmt2(ordinaryIncomeFromDiscount)}</div>
+              </div>
+              <div class="result-item">
+                <div class="result-label">Short-term Gain (above purchase) <button type="button" class="info-btn" data-info="tCgInfo">ⓘ</button></div>
+                <div class="info-text" id="tCgInfo">Any appreciation above the discounted purchase price. With immediate sale this is short-term and taxed at ordinary rates.</div>
+                <div class="result-value yellow">${fmt2(additionalGain)}</div>
+              </div>
+              <div class="result-item full">
+                <div class="result-label">Total taxed at ordinary rates <button type="button" class="info-btn" data-info="tTotalOrdInfo">ⓘ</button></div>
+                <div class="info-text" id="tTotalOrdInfo">Discount + short-term gain. Both taxed as ordinary income on an immediate / disqualifying sale.</div>
+                <div class="result-value yellow">${fmt2(totalOrdinaryIncome)}</div>
+              </div>
+              <div class="result-item">
+                <div class="result-label">Federal Tax <button type="button" class="info-btn" data-info="tFedInfo">ⓘ</button></div>
+                <div class="info-text" id="tFedInfo">Estimated federal ordinary income tax on the total ordinary amount.</div>
+                <div class="result-value">${fmt2(federalOrdinaryTax)}</div>
+              </div>
+              <div class="result-item">
+                <div class="result-label">State Tax <button type="button" class="info-btn" data-info="tStateInfo">ⓘ</button></div>
+                <div class="info-text" id="tStateInfo">Estimated state income tax (0% in no-tax states).</div>
+                <div class="result-value">${fmt2(stateTax)}</div>
+              </div>
+            </div>
+          </details>
+          <div class="result-item full" style="margin-top: 10px;">
+            <div class="result-label">Total Estimated Tax <button type="button" class="info-btn" data-info="tTotalInfo">ⓘ</button></div>
+            <div class="info-text" id="tTotalInfo">Federal + state tax on the full ordinary-income amount (discount + short-term gain).</div>
+            <div class="result-value red">${fmt2(totalEstTax)}</div>
+          </div>
+          <div class="result-item full" style="margin-top: 10px;">
+            <div class="result-label">After-Tax Profit (rough) <button type="button" class="info-btn" data-info="tAfterInfo">ⓘ</button></div>
+            <div class="info-text" id="tAfterInfo">Profit after subtracting estimated tax. Model assumes immediate sale (disqualifying disposition).</div>
+            <div class="result-value ${afterTaxProfit >= 0 ? 'green' : 'red'}">${fmt2(afterTaxProfit)}</div>
+          </div>
         </div>
       `;
     }
